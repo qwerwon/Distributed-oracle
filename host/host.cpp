@@ -74,6 +74,7 @@ int init_peer_config(){
     char buf[30];
     FILE* peer_fp = fopen("../peer_list.conf", "r+");
 
+    printf("Host: read peer info from configure file.\n");
      // index:<index>
     fgets(buf, sizeof(buf), peer_fp);
     {
@@ -120,6 +121,8 @@ int init_peer_config(){
         peer_list[i].sin_family = AF_INET;
         peer_list[i].sin_addr.s_addr = inet_addr(buf);
         peer_list[i].sin_port = htons(4000);
+
+        printf("Host: %d-th oracle ip addr is %s\n", i, buf);
     }
     
     return 1;
@@ -133,9 +136,10 @@ void recv_report(oe_enclave_t* enclave){
     uint8_t* remote_report = NULL;
     size_t remote_report_size = 0;
     oe_result_t result = OE_OK;
-    int cnt = 0, ret;
+    int cnt = 1, ret;
     socklen_t addrlen = 10;
     
+    printf("Host: recv_report...\n");
     while(cnt != oracle_num){
         // ECALL: verify_report_and_set_pubkey
         recvfrom(sock, &pkt, sizeof(struct report), 0, (struct sockaddr*)&sender_addr, &addrlen);
@@ -146,7 +150,7 @@ void recv_report(oe_enclave_t* enclave){
         remote_report = pkt.report_data;
         remote_report_size = pkt.report_data_size;
 
-        printf("Verifying %d-th oracle nodes remote report and public key...\n", pkt.index);
+        printf("Host: verifying %d-th oracle nodes remote report and public key...\n", pkt.index);
         result = verify_report_and_set_pubkey(
             enclave,
             &ret,
@@ -181,6 +185,7 @@ void broadcast_report(uint8_t* pem_key, size_t pem_key_size, uint8_t* remote_rep
     memcpy(pkt.report_data, remote_report, remote_report_size);
     pkt.report_data_size = remote_report_size;
 
+    printf("Host: broadcasting report to oracle nodes...\n");
     for(int i = 0; i < oracle_num; i++){
         if (i == my_index) continue;
         
@@ -274,7 +279,7 @@ int main(int argc, const char* argv[])
         if (buf[0] == '\n')
             break;
     }
-    
+
     /* Broadcast to all oracle nodes. */
     if (flag){
         flag--;
