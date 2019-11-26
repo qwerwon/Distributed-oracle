@@ -1,0 +1,4 @@
+*.o
+/host/oracle_host*
+/host/oracle_u.*
+/host/oracle_args.h
