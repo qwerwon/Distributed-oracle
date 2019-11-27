@@ -143,45 +143,60 @@ int init_peer_config(){
 }
 
 void accept_connection(int data){
-    int new_socket, cnt;
+    int new_socket = 0, cnt, flag = oracle_num / 2;
     struct sockaddr_in new_addr;
     socklen_t addr_size = sizeof(new_addr);
     printf("Host: waiting for accept()... \n");
-    while(1){
+    while(flag){
         new_socket = accept(sock[my_index], (struct sockaddr*)&new_addr, &addr_size);
 
         if (new_socket < 0){
             fprintf(stderr, "accept fail.\n");
-            usleep(2000000);
+            exit(0);
         }
+
+        else if (new_socket == 0)
+            continue;
 
         /* Warning:
          * Only odd 'oracle_num' is allowed. */
         for(int i = my_index + 1, cnt = 0; cnt < oracle_num / 2; i++, cnt++){
             i = REVOLVER(i, oracle_num);
-            if (strcmp(inet_ntoa(new_addr.sin_addr), inet_ntoa(peer_list[i].sin_addr)) == 0)
+            if (strcmp(inet_ntoa(new_addr.sin_addr), inet_ntoa(peer_list[i].sin_addr)) == 0){
+                printf("accept %d-th node(%s:%d)\n", i,
+                        inet_ntoa(new_addr.sinaddr),
+                        ntohs(new_addr.sin_port));
                 sock[i] = new_socket;
+                memcpy(peer_list[i].sin_port, new_addr.sin_port, sizeof(struct sockaddr_in));
+                flag--;
+                break;
+            }
         }
 
-        if (cnt > oracle_num /2)
+        if (cnt > oracle_num / 2)
             fprintf(stderr, "Unauthorized node connection.\n"); 
     }
 }
 
 int connect_to_peer(){
-    std::thread worker;
-    int ret;
+    std::thread acceptor;
+    int ret, flag[oracle_num], connect_cnt = oracle_num / 2;
+
+    /* Warning:
+     * Only odd 'oracle_num' is allowed. */
+    for (int i = 0; i < oracle_num; i++)
+        flag[i] = 1;
 
     // Socket generation
-    for(int i = 0; i < oracle_num; i++)
+    for(int i = 0; i < oracle_num; i++){
         sock[i] = socket(PF_INET, SOCK_STREAM,0);
-
-    if (sock[my_index] < 0){
-        fprintf(stderr, "socket generation fail.\n");
-        return -1;
+        if (sock[i] < 0){
+            fprintf(stderr, "socket generation fail.\n");
+            return -1;
+        }
     }
-    
-    printf("sin_family = %d, sin_port = %d, sin_addr = %s\n", 
+
+    printf("My sin_family = %d, sin_port = %d, sin_addr = %s\n", 
             my_addr.sin_family, 
             ntohs(my_addr.sin_port),
             inet_ntoa(my_addr.sin_addr));
@@ -193,27 +208,33 @@ int connect_to_peer(){
         return -1;
     }
 
+    if (listen(sock[my_index], 10) < 0){
+        fprintf(stderr, "listen fail.\n");
+        return -1;
+    }
+
     // Accept
-    worker = std::thread(accept_connection, my_index);
+    acceptor = std::thread(accept_connection, my_index);
 
     // Connect
 
     /* Warning:
      * Only odd 'oracle_num' is allowed. */
-    for (int i = my_index - 1, cnt = 0; cnt < oracle_num / 2; i--, cnt++){
-        i = REVOLVER(i, oracle_num);
-        if (connect(sock[i], (struct sockaddr *)&peer_list[i], sizeof(peer_list[i])) < 0){
-            fprintf(stderr, "connection to %d-th node(%s:%d) fail.\n", 
-                    i, 
-                    inet_ntoa(peer_list[i].sin_addr),
-                    ntohs(peer_list[i].sin_port));
-            cnt--;  i++;
-            usleep(2000000);
-            continue;
+    while(connect_cnt){
+        for (int i = 0, cnt = 0; cnt < oracle_num / 2; i--, cnt++){
+            i = REVOLVER(i, oracle_num);
+            if (flag[i] == 0)   continue;
+            if (connect(sock[i], (struct sockaddr *)&peer_list[i], sizeof(peer_list[i])) > 0){
+                printf("connection to %d-th node(%s:%d) succeed.\n", i, 
+                        inet_ntoa(peer_list[i].sin_addr),
+                        ntohs(peer_list[i].sin_port));
+                connect_cnt--;
+                flag[i] = 0;
+            }
         }
-        printf("Host: connection with %s succeed.\n", inet_ntoa(peer_list[i].sin_addr));
+        usleep(500000);
     }
-    
+      
     if (worker.joinable() == true)
         worker.join();
 
@@ -279,7 +300,7 @@ int broadcast_report(uint8_t* pem_key, size_t pem_key_size, uint8_t* remote_repo
 
     printf("Host: broadcasting report to oracle nodes...\n");
     for(int i = 0; i < oracle_num; i++){
-        if (i == my_index) continue;
+        if (i == my_index)  continue;
 
         printf("Host: send to node:%s:%d\n", inet_ntoa(peer_list[i].sin_addr), ntohs(peer_list[i].sin_port));
         if (send(sock[i], (char *)&pkt, sizeof(struct report), 0) <= 0){
