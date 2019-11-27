@@ -232,7 +232,6 @@ int connect_to_peer(){
                 flag[i] = 0;
             }
         }
-        usleep(500000);
     }
       
     if (acceptor.joinable() == true)
