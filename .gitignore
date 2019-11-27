@@ -1,5 +1,7 @@
 *.swp
 *.o
+/host/*.swp
+/enc/*.swp
 /host/oracle_host*
 /host/oracle_u.*
 /host/oracle_args.h
