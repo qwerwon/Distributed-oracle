@@ -113,6 +113,8 @@ int init_peer_config(){
         }
     }
     
+    printf("# of oracle = %d, my index = %d.\n", oracle_num, my_index);
+
     peer_list = (struct sockaddr_in *)malloc(sizeof(sockaddr_in) * oracle_num);
     sock = (int *)malloc(sizeof(int) * oracle_num);
 
