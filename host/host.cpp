@@ -128,6 +128,7 @@ int init_peer_config(){
             my_addr.sin_family = AF_INET;
             my_addr.sin_addr.s_addr = htonl(INADDR_ANY);
             my_addr.sin_port = htons(4000);
+            continue;
         }
 
         bzero(&peer_list[i], sizeof(struct sockaddr_in));
@@ -149,8 +150,10 @@ void accept_connection(int data){
     while(1){
         new_socket = accept(sock[my_index], (struct sockaddr*)&new_addr, &addr_size);
 
-        if (new_socket < 0)
+        if (new_socket < 0){
             fprintf(stderr, "accept fail.\n");
+            usleep(2000000);
+        }
 
         /* Warning:
          * Only odd 'oracle_num' is allowed. */
@@ -167,6 +170,7 @@ void accept_connection(int data){
 
 int connect_to_peer(){
     std::thread worker;
+    int ret;
 
     // Socket generation
     sock[my_index] = socket(PF_INET, SOCK_STREAM, 0);
@@ -175,9 +179,15 @@ int connect_to_peer(){
         return -1;
     }
     
+    printf("sin_family = %d, sin_port = %d, sin_addr = %s\n", 
+            my_addr.sin_family, 
+            ntohs(my_addr.sin_port),
+            inet_ntoa(my_addr.sin_addr));
+
     // Binding
-    if (bind(sock[my_index], (struct sockaddr *)&peer_list[my_index], sizeof(peer_list[my_index])) < 0){
-        fprintf(stderr, "bind fail.\n");
+    ret = bind(sock[my_index], (struct sockaddr *)&my_addr, sizeof(my_addr));
+    if (ret < 0){
+        fprintf(stderr, "bind fail %d.\n", ret);
         return -1;
     }
 
@@ -192,7 +202,9 @@ int connect_to_peer(){
         i = REVOLVER(i, oracle_num);
         if (connect(sock[i], (struct sockaddr *)&peer_list[i], sizeof(peer_list[i])) < 0){
             fprintf(stderr, "connection to %d-th node fail.\n", i);
-            return -1;
+            cnt--;  i++;
+            usleep(2000000);
+            continue;
         }
         printf("Host: connection with %s succeed.\n", inet_ntoa(peer_list[i].sin_addr));
     }
@@ -315,8 +327,7 @@ int main(int argc, const char* argv[])
     /* ECALL:Generate report and key pair. */
     /* Private: invisible encryption key to outside. */
     /* Pubkey: all msgs among oracle nodes would be verified with this key. */
-    printf("Host: requesting a remote report and the encryption key from 1st "
-           "enclave\n");
+    printf("Host: generating a remote report with encryption key\n");
     result = get_remote_report_with_pubkey(
         enclave,
         &ret,
@@ -327,7 +338,7 @@ int main(int argc, const char* argv[])
     if ((result != OE_OK) || (ret != 0))
     {
         printf(
-            "Host: verify_report_and_set_pubkey failed. %s",
+            "Host: get_remote_report_with_pubkey failed. %s",
             oe_result_str(result));
         if (ret == 0)
             ret = 1;
