@@ -178,6 +178,7 @@ void accept_connection(int data){
         if (cnt > oracle_num / 2)
             fprintf(stderr, "Unauthorized node connection.\n"); 
     }
+    printf("Host: accep done\n");
 }
 
 int connect_to_peer(){
@@ -226,8 +227,9 @@ int connect_to_peer(){
         for (int i = 0, cnt = 0; cnt < oracle_num / 2; i--, cnt++){
             i = REVOLVER(i, oracle_num);
             if (flag[i] == 0)   continue;
+            printf("Host: connect to &d-th node(%s)...\n", i, inet_ntoa(peer_list[i].sin_addr));
             if (connect(sock[i], (struct sockaddr *)&peer_list[i], sizeof(peer_list[i])) > 0){
-                printf("connection to %d-th node(%s:%d) succeed.\n", i, 
+                printf("Host: connection to %d-th node(%s:%d) succeed.\n", i, 
                         inet_ntoa(peer_list[i].sin_addr),
                         ntohs(peer_list[i].sin_port));
                 connect_cnt--;
