@@ -224,7 +224,7 @@ int connect_to_peer(){
     /* Warning:
      * Only odd 'oracle_num' is allowed. */
     while(connect_cnt){
-        for (int i = 0, cnt = 0; cnt < oracle_num / 2; i--, cnt++){
+        for (int i = my_index - 1, cnt = 0; cnt < oracle_num / 2; i--, cnt++){
             i = REVOLVER(i, oracle_num);
             if (flag[i] == 0)   continue;
             printf("Host: connect to %d-th node(%s)...\n", i, inet_ntoa(peer_list[i].sin_addr));
@@ -236,6 +236,7 @@ int connect_to_peer(){
                 flag[i] = 0;
             }
         }
+        usleep(1000000);
     }
       
     if (acceptor.joinable() == true)
