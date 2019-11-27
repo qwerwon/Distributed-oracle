@@ -50,4 +50,4 @@ sign:
 	oesign sign -e oracle_enc -c enc.conf -k ../keys/private1.pem
 
 clean:
-	rm -f *.o oracle_enc oralce_enc.signed ../common/oracle_t.* ../common/oracle_args.h *.pem oracle_pubkey_list.h
+	rm -f *.o oracle_enc oralce_enc.signed ../common/oracle_t.* ../common/oracle_args.h *.pem #oracle_pubkey_list.h
