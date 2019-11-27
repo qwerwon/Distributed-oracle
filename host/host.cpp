@@ -164,10 +164,10 @@ void accept_connection(int data){
             i = REVOLVER(i, oracle_num);
             if (strcmp(inet_ntoa(new_addr.sin_addr), inet_ntoa(peer_list[i].sin_addr)) == 0){
                 printf("accept %d-th node(%s:%d)\n", i,
-                        inet_ntoa(new_addr.sinaddr),
+                        inet_ntoa(new_addr.sin_addr),
                         ntohs(new_addr.sin_port));
                 sock[i] = new_socket;
-                memcpy(peer_list[i].sin_port, new_addr.sin_port, sizeof(struct sockaddr_in));
+                memcpy(&peer_list[i], &new_addr, sizeof(struct sockaddr_in));
                 flag--;
                 break;
             }
@@ -235,8 +235,8 @@ int connect_to_peer(){
         usleep(500000);
     }
       
-    if (worker.joinable() == true)
-        worker.join();
+    if (acceptor.joinable() == true)
+        acceptor.join();
 
     return 1;
 }
