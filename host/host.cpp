@@ -173,7 +173,9 @@ int connect_to_peer(){
     int ret;
 
     // Socket generation
-    sock[my_index] = socket(PF_INET, SOCK_STREAM, 0);
+    for(int i = 0; i < oracle_num; i++)
+        sock[i] = socket(PF_INET, SOCK_STREAM,0);
+
     if (sock[my_index] < 0){
         fprintf(stderr, "socket generation fail.\n");
         return -1;
@@ -201,7 +203,10 @@ int connect_to_peer(){
     for (int i = my_index - 1, cnt = 0; cnt < oracle_num / 2; i--, cnt++){
         i = REVOLVER(i, oracle_num);
         if (connect(sock[i], (struct sockaddr *)&peer_list[i], sizeof(peer_list[i])) < 0){
-            fprintf(stderr, "connection to %d-th node(%s) fail.\n", i, inet_ntoa(peer_list[i].sin_addr));
+            fprintf(stderr, "connection to %d-th node(%s:%d) fail.\n", 
+                    i, 
+                    inet_ntoa(peer_list[i].sin_addr),
+                    ntohs(peer_list[i].sin_port));
             cnt--;  i++;
             usleep(2000000);
             continue;
