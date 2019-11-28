@@ -178,7 +178,7 @@ void accept_connection(int data){
         if (cnt > oracle_num / 2)
             fprintf(stderr, "Unauthorized node connection.\n"); 
     }
-    printf("Host: accep done\n");
+    printf("Host: accept done\n");
 }
 
 int connect_to_peer(){
@@ -228,7 +228,7 @@ int connect_to_peer(){
             i = REVOLVER(i, oracle_num);
             if (flag[i] == 0)   continue;
             printf("Host: connect to %d-th node(%s)...\n", i, inet_ntoa(peer_list[i].sin_addr));
-            if (connect(sock[i], (struct sockaddr *)&peer_list[i], sizeof(peer_list[i])) > 0){
+            if (connect(sock[i], (struct sockaddr *)&peer_list[i], sizeof(peer_list[i])) >= 0){
                 printf("Host: connection to %d-th node(%s:%d) succeed.\n", i, 
                         inet_ntoa(peer_list[i].sin_addr),
                         ntohs(peer_list[i].sin_port));
@@ -236,7 +236,7 @@ int connect_to_peer(){
                 flag[i] = 0;
             }
         }
-        usleep(1000000);
+        usleep(3000000);
     }
       
     if (acceptor.joinable() == true)
@@ -308,7 +308,7 @@ int broadcast_report(uint8_t* pem_key, size_t pem_key_size, uint8_t* remote_repo
 
         printf("Host: send to node:%s:%d\n", inet_ntoa(peer_list[i].sin_addr), ntohs(peer_list[i].sin_port));
         if (send(sock[i], (char *)&pkt, sizeof(struct report), 0) <= 0){
-            fprintf(stderr, "send to %d-th oracle node fail.\n", i);
+            fprintf(stderr, "send report to %d-th oracle node fail.\n", i);
             return -1;
         }
     }
