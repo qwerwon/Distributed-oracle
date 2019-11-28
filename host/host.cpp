@@ -255,6 +255,7 @@ void recv_report(oe_enclave_t* enclave, int index){
     int ret, flag = 1;
 
     while(flag){
+        printf("Host: rcving...\n");
         if (recv(sock[index], (char *)rcvd_report, sizeof(struct report), 0) > 0){
             printf("Listener-%d: report received.\n", index);
             
@@ -290,6 +291,7 @@ void recv_report(oe_enclave_t* enclave, int index){
             free(remote_report);
             remote_report = NULL;
         }
+        usleep(1000000);
     }
 }
 
