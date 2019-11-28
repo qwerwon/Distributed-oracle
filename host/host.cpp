@@ -246,7 +246,7 @@ int connect_to_peer(){
 }
 
 void recv_report(oe_enclave_t* enclave, int index){
-    struct report *rcvd_report;
+    struct report rcvd_report;
     uint8_t* pem_key = NULL;
     size_t pem_key_size = 0;
     uint8_t* remote_report = NULL;
@@ -256,13 +256,13 @@ void recv_report(oe_enclave_t* enclave, int index){
 
     while(flag){
         printf("Host: rcving...\n");
-        if (recv(sock[index], (char *)rcvd_report, sizeof(struct report), 0) > 0){
+        if (recv(sock[index], (char *)&rcvd_report, sizeof(struct report), 0) > 0){
             printf("Listener-%d: report received.\n", index);
             
-            memcpy(pem_key, rcvd_report->public_key, rcvd_report->public_key_size);
-            pem_key_size = rcvd_report->public_key_size;
-            memcpy(remote_report, rcvd_report->report_data, rcvd_report->report_data_size);
-            remote_report_size = rcvd_report->report_data_size;
+            memcpy(pem_key, rcvd_report.public_key, rcvd_report.public_key_size);
+            pem_key_size = rcvd_report.public_key_size;
+            memcpy(remote_report, rcvd_report.report_data, rcvd_report.report_data_size);
+            remote_report_size = rcvd_report.report_data_size;
             
             mtx_lock.lock();
             result =  verify_report_and_set_pubkey(
