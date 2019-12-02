@@ -5,10 +5,11 @@
 #include <string.h>
 #include "log.h"
 
-Attestation::Attestation(Crypto* crypto, uint8_t* enclave_mrsigner)
+Attestation::Attestation(Crypto* crypto, uint8_t enclave_mrsigner[][32])
 {
     m_crypto = crypto;
-    m_enclave_mrsigner = enclave_mrsigner;
+    for (int i = 0; i < 3; i++)
+        m_enclave_mrsigner[i] = enclave_mrsigner[i];
 }
 
 /**
@@ -78,7 +79,8 @@ bool Attestation::attest_remote_report(
     const uint8_t* remote_report,
     size_t remote_report_size,
     const uint8_t* data,
-    size_t data_size)
+    size_t data_size,
+    uint8_t index)
 {
     bool ret = false;
     uint8_t sha256[32];
@@ -106,7 +108,7 @@ bool Attestation::attest_remote_report(
     // 2) validate the enclave identity's signed_id is the hash of the public
     // signing key that was used to sign an enclave. Check that the enclave was
     // signed by an trusted entity.
-    if (memcmp(parsed_report.identity.signer_id, m_enclave_mrsigner, 32) != 0)
+    if (memcmp(parsed_report.identity.signer_id, m_enclave_mrsigner[(int)index], 32) != 0)
     {
         TRACE_ENCLAVE("identity.signer_id checking failed.");
         TRACE_ENCLAVE(
@@ -117,7 +119,7 @@ bool Attestation::attest_remote_report(
             TRACE_ENCLAVE(
                 "m_enclave_mrsigner[%d]=0x%0x\n",
                 i,
-                (uint8_t)m_enclave_mrsigner[i]);
+                (uint8_t)m_enclave_mrsigner[(int)index][i]);
         }
 
         TRACE_ENCLAVE("\n\n\n");
@@ -129,7 +131,7 @@ bool Attestation::attest_remote_report(
                 i,
                 (uint8_t)parsed_report.identity.signer_id[i]);
         }
-        TRACE_ENCLAVE("m_enclave_mrsigner %s", m_enclave_mrsigner);
+        TRACE_ENCLAVE("m_enclave_mrsigner %s", m_enclave_mrsigner[(int)index]);
         goto exit;
     }
 

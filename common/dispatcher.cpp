@@ -36,30 +36,35 @@ bool ecall_dispatcher::initialize(const char* name)
     }
 
     // Extract modulus from raw PEM.
-    if (!m_crypto->get_rsa_modulus_from_pem(
-            m_enclave_config->other_enclave_pubkey_pem,
-            m_enclave_config->other_enclave_pubkey_pem_size,
-            &modulus,
-            &modulus_size))
-    {
-        goto exit;
-    }
+    for (int i = 0; i < 3; i++){
+        if (!m_crypto->get_rsa_modulus_from_pem(
+                m_enclave_config->other_enclave_pubkey_pem[i],
+                m_enclave_config->other_enclave_pubkey_pem_size,
+                &modulus,
+                &modulus_size))
+        {
+            goto exit;
+        }
 
-    // Reverse the modulus and compute sha256 on it.
-    for (size_t i = 0; i < modulus_size / 2; i++)
-    {
-        uint8_t tmp = modulus[i];
-        modulus[i] = modulus[modulus_size - 1 - i];
-        modulus[modulus_size - 1 - i] = tmp;
-    }
+        // Reverse the modulus and compute sha256 on it.
+        for (size_t i = 0; i < modulus_size / 2; i++)
+        {
+            uint8_t tmp = modulus[i];
+            modulus[i] = modulus[modulus_size - 1 - i];
+            modulus[modulus_size - 1 - i] = tmp;
+        }
 
-    // Calculate the MRSIGNER value which is the SHA256 hash of the
-    // little endian representation of the public key modulus. This value
-    // is populated by the signer_id sub-field of a parsed oe_report_t's
-    // identity field.
-    if (m_crypto->Sha256(modulus, modulus_size, m_other_enclave_mrsigner) != 0)
-    {
-        goto exit;
+        // Calculate the MRSIGNER value which is the SHA256 hash of the
+        // little endian representation of the public key modulus. This value
+        // is populated by the signer_id sub-field of a parsed oe_report_t's
+        // identity field.
+        if (m_crypto->Sha256(modulus, modulus_size, m_other_enclave_mrsigner[i]) != 0)
+        {
+            goto exit;
+        }
+
+        if (modulus != NULL)
+            free(modulus);
     }
 
     m_attestation = new Attestation(m_crypto, m_other_enclave_mrsigner);
@@ -154,7 +159,8 @@ int ecall_dispatcher::verify_report_and_set_pubkey(
     uint8_t* pem_key,
     size_t key_size,
     uint8_t* remote_report,
-    size_t remote_report_size)
+    size_t remote_report_size,
+    uint8_t index)
 {
     int ret = 1;
 
@@ -166,9 +172,9 @@ int ecall_dispatcher::verify_report_and_set_pubkey(
 
     // Attest the remote report and accompanying key.
     if (m_attestation->attest_remote_report(
-            remote_report, remote_report_size, pem_key, key_size))
+            remote_report, remote_report_size, pem_key, key_size, index))
     {
-        memcpy(m_crypto->get_the_other_enclave_public_key(), pem_key, key_size);
+        memcpy(m_crypto->get_the_other_enclave_public_key(index), pem_key, key_size);
     }
     else
     {

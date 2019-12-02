@@ -259,11 +259,16 @@ void recv_report(oe_enclave_t* enclave, int index){
         if (recv(sock[index], (char *)&rcvd_report, sizeof(struct report), 0) > 0){
             printf("Listener-%d: report received.\n", index);
             
-            memcpy(pem_key, rcvd_report.public_key, rcvd_report.public_key_size);
+            //printf("pem key size = %zu.\n", rcvd_report.public_key_size);
+            //memcpy(pem_key, rcvd_report.public_key, rcvd_report.public_key_size);
+            pem_key = rcvd_report.public_key;
             pem_key_size = rcvd_report.public_key_size;
-            memcpy(remote_report, rcvd_report.report_data, rcvd_report.report_data_size);
+            //printf("remote report size = %zu.\n", rcvd_report.report_data_size);
+            //memcpy(remote_report, rcvd_report.report_data, rcvd_report.report_data_size);
+            remote_report = rcvd_report.report_data;
             remote_report_size = rcvd_report.report_data_size;
-            
+
+            printf("Host: mutex lock.\n");
             mtx_lock.lock();
             result =  verify_report_and_set_pubkey(
                 enclave,
@@ -271,7 +276,8 @@ void recv_report(oe_enclave_t* enclave, int index){
                 pem_key,
                 pem_key_size,
                 remote_report,
-                remote_report_size);
+                remote_report_size,
+                index);
 
             if ((result != OE_OK) || (ret != 0)){
                 printf(
@@ -285,6 +291,7 @@ void recv_report(oe_enclave_t* enclave, int index){
                 flag = 0;
             }
             mtx_lock.unlock();
+            printf("Host: mutex unlock.\n");
 
             free(pem_key);
             pem_key = NULL;

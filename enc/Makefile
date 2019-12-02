@@ -35,7 +35,7 @@ all:
 # that contains the expected public key that is signed by a trusted CA.
 #
 # This key pair is used to encrypt/decrypt mrenclave
-genkey: public.pem	
+genkey:	
 	../keys/gen_pubkey_header.sh ./oracle_pubkey_list.h $<
 
 build:
@@ -50,4 +50,4 @@ sign:
 	oesign sign -e oracle_enc -c enc.conf -k ../keys/private1.pem
 
 clean:
-	rm -f *.o oracle_enc oracle_enc.signed ../common/oracle_t.* ../common/oracle_args.h *.pem #oracle_pubkey_list.h
+	rm -f *.o oracle_enc oracle_enc.signed ../common/oracle_t.* ../common/oracle_args.h *.pem oracle_pubkey_list.h

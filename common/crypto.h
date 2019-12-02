@@ -28,7 +28,7 @@ class Crypto
     bool m_initialized;
 
     // Public key of another enclave.
-    uint8_t m_other_enclave_pubkey[PUBLIC_KEY_SIZE];
+    uint8_t m_other_enclave_pubkey[3][PUBLIC_KEY_SIZE];
 
   public:
     Crypto();
@@ -74,9 +74,10 @@ class Crypto
         size_t* modulus_size);
 
     // Public key of another enclave.
-    uint8_t* get_the_other_enclave_public_key()
+    uint8_t* get_the_other_enclave_public_key(
+        uint8_t index)
     {
-        return m_other_enclave_pubkey;
+        return m_other_enclave_pubkey[index];
     }
 
     /**

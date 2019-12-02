@@ -8,4 +8,5 @@
 /host/oracle_host
 /enc/oracle_enc
 /enc/oracle_enc.signed
+/keys/private*
 ./peer_list.conf

@@ -12,10 +12,10 @@ class Attestation
 {
   private:
     Crypto* m_crypto;
-    uint8_t* m_enclave_mrsigner;
+    uint8_t* m_enclave_mrsigner[3];  // Warning! hard coded(as number of racle)
 
   public:
-    Attestation(Crypto* crypto, uint8_t* enclave_mrsigner);
+    Attestation(Crypto* crypto, uint8_t enclave_mrsigner[][32]);
 
     // Generate a remote report for the given data. The SHA256 digest of the
     // data is stored in the report_data field of the generated remote report.
@@ -38,7 +38,8 @@ class Attestation
         const uint8_t* remote_report,
         size_t remote_report_size,
         const uint8_t* data,
-        size_t data_size);
+        size_t data_size,
+        uint8_t index);
 };
 
 #endif // OE_SAMPLES_ATTESTATION_ENC_ATTESTATION_H

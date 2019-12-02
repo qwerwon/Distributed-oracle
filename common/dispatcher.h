@@ -12,9 +12,8 @@ using namespace std;
 typedef struct _enclave_config_data
 {
     uint8_t* enclave_secret_data;
-    const char* other_enclave_pubkey_pem;   // const char**
+    const char* other_enclave_pubkey_pem[3];   // Warning! hard coded(as number of oracle)
     size_t other_enclave_pubkey_pem_size;
-    uint8_t number_of_other_encalve;
 } enclave_config_data_t;
 
 class ecall_dispatcher
@@ -25,7 +24,7 @@ class ecall_dispatcher
     Attestation* m_attestation;
     string m_name;
     enclave_config_data_t* m_enclave_config;
-    unsigned char m_other_enclave_mrsigner[32];
+    unsigned char m_other_enclave_mrsigner[3][32]; // Warning! hard coded(as number of oracle)
 
   public:
     ecall_dispatcher(const char* name, enclave_config_data_t* enclave_config);
@@ -39,7 +38,8 @@ class ecall_dispatcher
         uint8_t* pem_key,
         size_t key_size,
         uint8_t* remote_report,
-        size_t remote_report_size);
+        size_t remote_report_size,
+        uint8_t index);
 
   private:
     bool initialize(const char* name);
