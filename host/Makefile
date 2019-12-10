@@ -27,7 +27,7 @@ build:
 	oeedger8r ../oracle.edl --untrusted
 	$(CC) -c $(CFLAGS) $(CINCLUDES) oracle_u.c
 	$(CXX) -c $(CXXFLAGS) $(INCLUDES) host.cpp
-	$(CXX) -o oralce_host host.o oracle_u.o $(LDFLAGS)
+	$(CXX) -o oracle_host host.o oracle_u.o $(LDFLAGS)
 
 clean:
-	rm -f oralce_host* *.o oracle_u.* oracle_args.h
+	rm -f oracle_host* *.o oracle_u.* oracle_args.h
